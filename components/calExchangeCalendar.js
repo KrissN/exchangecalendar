@@ -362,6 +362,9 @@ function calExchangeCalendar() {
 	this.offlineTimer = null;
 	this.offlineQueue = [];
 
+	this.updateQueue = [];
+	this.updateCalendarTimer = null;
+
 	this.doReset = false;
 
 	this.haveTimeZones = false;
@@ -547,11 +550,11 @@ calExchangeCalendar.prototype = {
 		}
 
 		var itemsFromCache = this.getItemsFromOfflineCache(this.startDate, this.endDate);
-		if (itemsFromCache) {
+/*		if (itemsFromCache) {
 			var endTime = cal.createDateTime();
 			var duration = endTime.subtractDate(startTime);
 			this.logInfo("We got '"+itemsFromCache.length+"' items from offline cache.(took "+duration.inSeconds+" seconds)");
-		}
+		}*/
 
 		this.loadingFromCache = false;
 
@@ -5662,9 +5665,9 @@ this.logInfo("!!CHANGED:"+String(e));
 			//exchWebService.commonFunctions.LOG("["+this.name+"] processQueue:"+aQueueNumber+" ("+exchWebService.commonFunctions.STACKshort()+")");
 			//this.observerService.notifyObservers(this, "onExchangeProgressChange", "-1");  
 			var itemsFromCache = this.getItemsFromOfflineCache(queueItem.rangeStart, queueItem.rangeEnd);
-			if (itemsFromCache) {
+/*			if (itemsFromCache) {
 				this.logInfo("We got '"+itemsFromCache.length+"' items from offline cache.");
-			}
+			}*/
 		}
 
 	},
@@ -7097,6 +7100,35 @@ this.logInfo("getTaskItemsOK 4");
 	},
 
 	updateCalendar: function _updateCalendar(erGetItemsRequest, aItems, doNotify)
+	{
+		for (var index in aItems) {
+			this.updateQueue.push({ request: erGetItemsRequest, item: aItems[index], doNotify: doNotify});
+		}
+
+		if ((this.updateQueue.length > 0) && (!this.updateCalendarTimer)) {
+			this.updateCalendarTimer = Cc["@mozilla.org/timer;1"]
+				.createInstance(Ci.nsITimer);
+
+		        var self = this;
+			var timerCallback = {
+				notify: function setTimeout_notify() {
+					var counter = 0;
+					while ((counter < 5) && (self.updateQueue.length > 0)) {
+						var item = self.updateQueue[0];
+						self.updateQueue.shift();
+						self.updateCalendar2(item.request, [item.item], item.doNotify);
+						counter++;
+					}
+				}
+			};
+
+			this.updateCalendarTimer.initWithCallback(timerCallback, 200, this.updateCalendarTimer.TYPE_REPEATING_SLACK);
+		}
+
+		return true;
+	},
+	
+	updateCalendar2: function _updateCalendar2(erGetItemsRequest, aItems, doNotify)
 	{
 		//this.logInfo("updateCalendar");
 		var items = [];
