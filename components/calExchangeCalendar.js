@@ -6159,6 +6159,46 @@ this.logInfo("getTaskItemsOK 4");
 
 	notifyTheObservers: function _notifyTheObservers(aCommand, aArray)
 	{
+		this.updateQueue.push({ command: aCommand, array: aArray });
+		this.logInfo("  == updateQueue 1:"+this.updateQueue.length);
+
+		if ((this.updateQueue.length > 0) && (!this.updateCalendarTimer)) {
+			this.updateCalendarTimer = Cc["@mozilla.org/timer;1"]
+				.createInstance(Ci.nsITimer);
+
+		        var self = this;
+			var timerCallback = {
+				notify: function setTimeout_notify() {
+					var counter = 0;
+					self.logInfo("  == updateQueue 2:"+self.updateQueue.length);
+					while ((counter < 5) && (self.updateQueue.length > 0)) {
+						var item = self.updateQueue[0];
+						self.updateQueue.shift();
+						self.notifyTheObservers2(item.command, item.array);
+						counter++;
+					}
+					if (self.updateQueue.length == 0) {
+						self.logInfo("  == updateQueue: Removing timer");
+						self.updateCalendarTimer.cancel();
+						self.updateCalendarTimer = null;
+					}
+				}
+			};
+
+			this.updateCalendarTimer.initWithCallback(timerCallback, 200, this.updateCalendarTimer.TYPE_REPEATING_SLACK);
+		}
+		else {
+			if ((this.updateQueue.length == 0) && (this.updateCalendarTimer)) {
+				this.updateCalendarTimer.cancel();
+				this.updateCalendarTimer = null;
+			}
+		}
+
+		return true;
+	},
+
+	notifyTheObservers2: function _notifyTheObservers2(aCommand, aArray)
+	{
 		try {
 			if (aArray[0].title == "Lange test2") {
 				this.logInfo(" notifyTheObservers: aCommand:"+aCommand+", item.title:"+aArray[0].title);
@@ -7105,7 +7145,7 @@ this.logInfo("getTaskItemsOK 4");
 		}
 	},
 
-	updateCalendar: function _updateCalendar(erGetItemsRequest, aItems, doNotify)
+/*	updateCalendar: function _updateCalendar(erGetItemsRequest, aItems, doNotify)
 	{
 		for (var index in aItems) {
 			this.updateQueue.push({ request: erGetItemsRequest, item: aItems[index], doNotify: doNotify});
@@ -7119,22 +7159,34 @@ this.logInfo("getTaskItemsOK 4");
 			var timerCallback = {
 				notify: function setTimeout_notify() {
 					var counter = 0;
+					//self.logInfo("  == updateQueue:"+self.updateQueue.length);
 					while ((counter < 5) && (self.updateQueue.length > 0)) {
 						var item = self.updateQueue[0];
 						self.updateQueue.shift();
 						self.updateCalendar2(item.request, [item.item], item.doNotify);
 						counter++;
 					}
+					if (self.updateQueue.length == 0) {
+						//self.logInfo("  == updateQueue: Removing timer");
+						self.updateCalendarTimer.cancel();
+						self.updateCalendarTimer = null;
+					}
 				}
 			};
 
-			this.updateCalendarTimer.initWithCallback(timerCallback, 200, this.updateCalendarTimer.TYPE_REPEATING_SLACK);
+			this.updateCalendarTimer.initWithCallback(timerCallback, 5, this.updateCalendarTimer.TYPE_REPEATING_SLACK);
+		}
+		else {
+			if ((this.updateQueue.length == 0) && (this.updateCalendarTimer)) {
+				this.updateCalendarTimer.cancel();
+				this.updateCalendarTimer = null;
+			}
 		}
 
 		return true;
-	},
+	},*/
 	
-	updateCalendar2: function _updateCalendar2(erGetItemsRequest, aItems, doNotify)
+	updateCalendar: function _updateCalendar(erGetItemsRequest, aItems, doNotify)
 	{
 		//this.logInfo("updateCalendar");
 		var items = [];
