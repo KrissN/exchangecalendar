@@ -3595,6 +3595,12 @@ this.logInfo("singleModified doNotify");
 			this.calendarPoller.cancel();
 		}
 
+		if (this.updateCalendarTimer) {
+			this.updateCalendarTimer.cancel();
+			this.updateCalendarTimer = null;
+			this.updateQueue= [];
+		}
+
 		if (this.getProperty("disabled")) {
 			// Remove all items in cache from calendar.
 			this.logInfo("Calendar is disabled. So we are done resetting.");
@@ -7940,6 +7946,12 @@ this.logInfo("getTaskItemsOK 4");
 
 		if (this.calendarPoller) {
 			this.calendarPoller.cancel();
+		}
+
+		if (this.updateCalendarTimer) {
+			this.updateCalendarTimer.cancel();
+			this.updateCalendarTimer = null;
+			this.updateQueue= [];
 		}
 
 		for each(var tmpJob in this.tmpJobs) {
