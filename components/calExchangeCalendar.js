@@ -6171,7 +6171,7 @@ this.logInfo("getTaskItemsOK 4");
 				notify: function setTimeout_notify() {
 					var counter = 0;
 					self.logInfo("  == updateQueue 2:"+self.updateQueue.length);
-					while ((counter < 5) && (self.updateQueue.length > 0)) {
+					while ((counter < 1) && (self.updateQueue.length > 0)) {
 						var item = self.updateQueue[0];
 						self.updateQueue.shift();
 						self.notifyTheObservers2(item.command, item.array);
